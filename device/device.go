@@ -90,6 +90,11 @@ type Device struct {
 	ipcMutex sync.RWMutex
 	closed   chan struct{}
 	log      *Logger
+
+	events struct {
+		sync.RWMutex // protects event handler
+		eventHandler func(Event)
+	}
 }
 
 // deviceState represents the state of a Device.
@@ -284,6 +289,8 @@ func (device *Device) SetPrivateKey(sk NoisePrivateKey) error {
 
 func NewDevice(tunDevice tun.Device, bind conn.Bind, logger *Logger) *Device {
 	device := new(Device)
+
+	device.events.eventHandler = nil
 	device.state.state.Store(uint32(deviceStateDown))
 	device.closed = make(chan struct{})
 	device.log = logger
@@ -324,6 +331,22 @@ func NewDevice(tunDevice tun.Device, bind conn.Bind, logger *Logger) *Device {
 	go device.RoutineTUNEventReader()
 
 	return device
+}
+
+func (device *Device) SetEventHandler(e func(Event)) {
+	device.events.Lock()
+	defer device.events.Unlock()
+
+	device.events.eventHandler = e
+}
+
+func (device *Device) runEvent(data Event) {
+	device.events.RLock()
+	defer device.events.RUnlock()
+
+	if device.events.eventHandler != nil {
+		go device.events.eventHandler(data)
+	}
 }
 
 // BatchSize returns the BatchSize for the device as a whole which is the max of

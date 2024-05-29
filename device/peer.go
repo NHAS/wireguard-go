@@ -283,7 +283,22 @@ func (peer *Peer) SetEndpointFromPacket(endpoint conn.Endpoint) {
 		return
 	}
 	peer.endpoint.clearSrcOnTx = false
+	peer.setEndpoint(endpoint)
+}
+
+// Unguarded, do not use this without locking first
+func (peer *Peer) setEndpoint(endpoint conn.Endpoint) {
+	if peer.endpoint.val != endpoint {
+		peer.device.runEvent(Event{Type: EventEndpointChange, Pk: peer.handshake.remoteStatic})
+	}
+
 	peer.endpoint.val = endpoint
+}
+
+func (peer *Peer) SetEndpointFromStatic(endpoint conn.Endpoint) {
+	peer.endpoint.Lock()
+	defer peer.endpoint.Unlock()
+	peer.setEndpoint(endpoint)
 }
 
 func (peer *Peer) markEndpointSrcForClearing() {
