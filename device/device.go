@@ -11,6 +11,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"golang.org/x/exp/maps"
 	"golang.zx2c4.com/wireguard/conn"
 	"golang.zx2c4.com/wireguard/ratelimiter"
 	"golang.zx2c4.com/wireguard/rwcancel"
@@ -343,6 +344,13 @@ func (device *Device) LookupPeer(pk NoisePublicKey) *Peer {
 	defer device.peers.RUnlock()
 
 	return device.peers.keyMap[pk]
+}
+
+func (device *Device) LookupAllPeers() []*Peer {
+	device.peers.RLock()
+	defer device.peers.RUnlock()
+
+	return maps.Values(device.peers.keyMap)
 }
 
 func (device *Device) RemovePeer(key NoisePublicKey) {
