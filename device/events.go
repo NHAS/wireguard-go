@@ -7,6 +7,7 @@ const (
 )
 
 type Event struct {
-	Type EventType
-	Pk   NoisePublicKey
+	Type     EventType
+	Pk       NoisePublicKey
+	Endpoint string
 }
