@@ -288,7 +288,7 @@ func (peer *Peer) SetEndpointFromPacket(endpoint conn.Endpoint) {
 
 // Unguarded, do not use this without locking first
 func (peer *Peer) setEndpoint(endpoint conn.Endpoint) {
-	if peer.endpoint.val.DstToString() != endpoint.DstToString() {
+	if peer.endpoint.val == nil || peer.endpoint.val.DstToString() != endpoint.DstToString() {
 		peer.device.runEvent(Event{Type: EventEndpointChange, Pk: peer.handshake.remoteStatic, Endpoint: endpoint.DstToString()})
 	}
 
